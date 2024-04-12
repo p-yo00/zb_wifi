@@ -1,0 +1,12 @@
+table, td {
+    border: 1px solid darkgray;
+    border-collapse: collapse;
+    text-align: center;
+}
+tr:nth-child(even) td {
+    background: #eeeeee;
+}
+th {
+    border: 1px solid white;
+    background: lightgreen;
+}
