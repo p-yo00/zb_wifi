@@ -17,15 +17,6 @@ import java.util.*;
 
 public class Service {
     private final String sqlitePath = "E:/Users/tmshd/Documents/제로베이스/Mission1/identifier.sqlite";
-    private final String key;
-
-    {
-        try {
-            key = new Properties().load(new FileInputStream("key.properties")).getProperty("key");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private Connection conn = null;
     private PreparedStatement pstmt = null;
@@ -117,6 +108,14 @@ public class Service {
     public int getWifiApi() throws IOException {
         // API 가져오기
         StringBuffer url = new StringBuffer();
+        Properties prop = new Properties();
+        String key;
+        try {
+            prop.load(new FileInputStream("key.properties"));
+            key = (String) prop.get("key");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         url.append("http://openapi.seoul.go.kr:8088/")
                 .append(key)
                 .append("/json/TbPublicWifiInfo/1/5/");
@@ -190,6 +189,7 @@ public class Service {
         try {
             for (Field field : fields) {
                 field.setAccessible(true);
+                if (rs.getObject(field.getName()) == null) continue;
                 field.set(obj, rs.getObject(field.getName()));
             }
         } catch (Exception e) {
@@ -387,6 +387,7 @@ public class Service {
         try {
             pstmt = conn.prepareStatement("delete from bookmark_wifi where id=?");
             pstmt.setInt(1, id);
+            pstmt.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -416,6 +417,7 @@ public class Service {
         try {
             pstmt = conn.prepareStatement("delete from bookmark where id=?");
             pstmt.setInt(1, id);
+            pstmt.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

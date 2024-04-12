@@ -2,8 +2,11 @@ package com.example.mission1;
 
 import com.example.mission1.vo.WifiInfo;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Properties;
 
 public class Main {
     public static void main(String[] args) {
@@ -44,6 +47,16 @@ public class Main {
                 e.printStackTrace();
             }
         }
+
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileInputStream("key.properties"));
+            System.out.println(prop);
+            System.out.println(prop.get("key"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }

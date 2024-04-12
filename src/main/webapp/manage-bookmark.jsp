@@ -6,6 +6,7 @@
 <head>
     <title>북마크 그룹</title>
     <link href="/css/table.css" rel="stylesheet" type="text/css">
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 </head>
 <body>
     <h1>북마크 그룹</h1>
@@ -31,7 +32,6 @@
         <%
             for (Bookmark bm : bookmarks) {
         %>
-        <form>
         <tr id="<%=bm.getId()%>">
             <td><%=bm.getId()%></td>
             <td><%=bm.getName()%></td>

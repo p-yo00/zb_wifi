@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * 페이지 이동이 없고 아무 것도 return 하지 않거나 json 데이터를 전달하는 Servlet
  */
-@WebServlet(urlPatterns = {"/wifi", "/delHistory", "/add/*"})
+@WebServlet(urlPatterns = {"/wifi", "/delHistory", "/add/*", "/delBookmark"})
 public class RestServlet extends HttpServlet {
     Service service;
     @Override
