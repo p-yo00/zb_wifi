@@ -17,6 +17,11 @@ import java.net.URLDecoder;
 import java.sql.*;
 import java.util.*;
 
+/**
+ *  작성자: 박예온
+ *  date: 24-04-14
+ *  서블릿에서 실행하게 되고 주로 db 관련 작업을 수행하는 클래스
+ */
 public class Service {
     // 프로젝트의 경로를 적어주어야 함!
     private final String projectPath = "E:/Users/tmshd/Documents/제로베이스/Mission1";
@@ -25,6 +30,9 @@ public class Service {
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
 
+    /**
+     *  db connection 생성
+     */
     private void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -34,6 +42,9 @@ public class Service {
         }
     }
 
+    /**
+     *  db connection, PreparedStatement, ResultSet 연결 해제
+     */
     private void disconnect() {
         try {
             if (conn != null) {
@@ -50,10 +61,14 @@ public class Service {
         }
     }
 
+    /**
+     *  obj에 저장된 값들을 order순서로 PreparedStatement에 set한다. = pstmt.setInt(1, obj.get(""))
+     */
     private void setPstmt(Object obj, String[] order) {
         Field[] fields = obj.getClass().getDeclaredFields();
         HashMap<String, Object> map = new HashMap<>();
 
+        // 먼저 Map에 필드의 이름을 key, 값을 value로 저장
         for (Field field : fields) {
             field.setAccessible(true);
             try {
@@ -80,6 +95,9 @@ public class Service {
         }
     }
 
+    /**
+     *  url로 http 접속을 하고 key가 path인 JsonObject를 리턴한다.
+     */
     private JsonObject httpApi(String url, String path) throws IOException {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(url.toString()).build();
@@ -90,7 +108,10 @@ public class Service {
 
         return jsonObj;
     }
-    
+
+    /**
+     *  history 테이블에서 전체 데이터를 가져와서 List 리턴
+     */
     public List<History> getHistory() {
         List<History> list = new ArrayList<>();
         connect();
@@ -108,6 +129,9 @@ public class Service {
         return list;
     }
 
+    /**
+     *  wifi 데이터를 open api로 가져오고 db에 insert 한 후, 총 가져온 갯수를 리턴
+     */
     public int getWifiApi() throws IOException {
         // API 가져오기
         StringBuffer url = new StringBuffer();
@@ -123,10 +147,10 @@ public class Service {
                 .append(key)
                 .append("/json/TbPublicWifiInfo/1/5/");
         JsonObject jsonObj = httpApi(url.toString(), "TbPublicWifiInfo");
-        int totalCount = jsonObj.get("list_total_count").getAsInt();
+        int totalCount = jsonObj.get("list_total_count").getAsInt(); // 데이터 전체 갯수
 
         ArrayList<WifiInfo> wifiInfoList = new ArrayList<>();
-        for (int i=1; i<=totalCount; i+=1000) { // 천개씩 호출 totalCount
+        for (int i=1; i<=totalCount; i+=1000) { // 천개씩 호출해서 List 저장
             url = new StringBuffer();
             url.append("http://openapi.seoul.go.kr:8088/")
                     .append(key)
@@ -137,7 +161,7 @@ public class Service {
             jsonObj = httpApi(url.toString(), "TbPublicWifiInfo");
             JsonArray jsonArr = (JsonArray) jsonObj.get("row");
 
-            for (JsonElement item : jsonArr) {
+            for (JsonElement item : jsonArr) { // json 문자열을 wifiInfo 클래스로 바꿔서 List 저장
                 String jsonStr = item.getAsJsonObject().toString();
                 WifiInfo wifiInfo = new Gson().fromJson(jsonStr, WifiInfo.class);
                 if (wifiInfo != null) {
@@ -181,13 +205,16 @@ public class Service {
         return totalCount;
     }
 
+    /**
+     *  resultSet 값을 obj의 필드에 set한다. = obj.set##(rs.getInt("##"))
+     */
     private Object resultSetToObject(Object obj) {
         Field[] fields = obj.getClass().getDeclaredFields();
 
         try {
             for (Field field : fields) {
                 field.setAccessible(true);
-                if (rs.getObject(field.getName()) == null) continue;
+                if (rs.getObject(field.getName()) == null) continue; // 필드값이 null이면 넣지 않음
                 field.set(obj, rs.getObject(field.getName()));
             }
         } catch (Exception e) {
@@ -196,15 +223,18 @@ public class Service {
         return obj;
     }
 
+    /**
+     *  lat, lnt를 비교해 거리 순으로 가까운 n개의 wifi를 가져와서 jsonArr 리턴
+     */
     public JsonObject getNearNWifi(int n, double lat, double lnt) {
         connect();
+        // 하버사인 공식으로 위경도를 비교한다.
         String sql = "select *, (6371*acos(cos(radians(lat))*cos(radians(?))*cos(radians(lnt)" +
                 "-radians(?))+sin(radians(lat))*sin(radians(?))))" +
                 "AS distance FROM wifi_info " +
                 "ORDER BY distance " +
                 "Limit "+n;
         try {
-            // 위경도를 비교해 거리 순으로 가까운 (하버사인 공식) n(20)개의 wifi를 가져온다.
             pstmt = conn.prepareStatement(sql);
             pstmt.setDouble(1, lat);
             pstmt.setDouble(2, lnt);
@@ -220,7 +250,7 @@ public class Service {
                 jsonArr.add(new Gson().toJson(wifiInfo));
             }
 
-            // 조회 기록 테이블에 추가
+            // 조회 기록 (history) 테이블에 추가
             pstmt = conn.prepareStatement("insert into history(lat, lnt)" +
                     "values(?,?)");
             pstmt.setDouble(1, lat);
@@ -241,6 +271,9 @@ public class Service {
         return null;
     }
 
+    /**
+     *  query 문자열 (key=value&)에서 key와 value를 Map으로 변환
+     */
     private Map<String, Object> getParameterMap(String queryStr) {
         String[] queries = queryStr.split("&");
         Map<String, Object> map = new HashMap<>();
@@ -257,6 +290,9 @@ public class Service {
         return map;
     }
 
+    /**
+     *  primary key로 특정 wifi 상세 정보를 조회한다.
+     */
     public WifiInfo getWifiInfo(String queryStr) {
         Map<String, Object> queryMap = getParameterMap(queryStr);
         connect();
@@ -280,6 +316,9 @@ public class Service {
         return wifiInfo;
     }
 
+    /**
+     *  조회 내역 (history)에서 id에 해당하는 데이터를 삭제한다.
+     */
     public void deleteHistory(int id) {
         connect();
         try {
@@ -293,6 +332,9 @@ public class Service {
         }
     }
 
+    /**
+     *  bookmark 테이블에 데이터를 추가한다.
+     */
     public void addBookmarkGroup(String name, int order) {
         connect();
         try {
@@ -307,6 +349,9 @@ public class Service {
         }
     }
 
+    /**
+     *  모든 bookmark를 order 순으로 가져온다.
+     */
     public List<Bookmark> getBookmarkGroup() {
         connect();
         List<Bookmark> list = new ArrayList<>();
@@ -325,6 +370,9 @@ public class Service {
         return list;
     }
 
+    /**
+     *  queryStr에서 bookmark id와 wifi id를 가져와 bookmark에 wifi를 저장한다.
+     */
     public void addBookmarkWifi(String queryStr) {
         Map<String, Object> map = getParameterMap(queryStr);
         connect();
@@ -340,10 +388,14 @@ public class Service {
         }
     }
 
+    /**
+     *  bookmark에 저장된 wifi 정보를 가져온다.
+     */
     public List<BookmarkWifi> getBookmarkWifi() {
         List<BookmarkWifi> list = new ArrayList<>();
         connect();
 
+        // bookmark id와 wifi id를 이용해 bookmark 테이블과 wifi 테이블을 조인해서 name을 가져온다.
         String sql = "select bw.id, bookmarkId, wifiId, name as bookmarkNm, wifiNm, bw.createdDt" +
                 " from bookmark_wifi bw" +
                 " inner join bookmark b on bw.bookmarkId = b.id" +
@@ -363,6 +415,9 @@ public class Service {
         return list;
     }
 
+    /**
+     *  id로 bookmark에 저장된 와이파이의 상세정보를 조회한다.
+     */
     public BookmarkWifi getBookmarkWifiById(String queryStr) {
         Map<String, Object> map = getParameterMap(queryStr);
         BookmarkWifi bmWifi = null;
@@ -386,6 +441,9 @@ public class Service {
         return bmWifi;
     }
 
+    /**
+     *  bookmark에 저장된 wifi를 삭제한다.
+     */
     public void deleteBookmarkWifi(int id) {
         connect();
         try {
@@ -399,6 +457,9 @@ public class Service {
         }
     }
 
+    /**
+     *  id로 특정 bookmark 정보를 가져온다.
+     */
     public Bookmark getBookmarkById(String queryStr) {
         Map<String, Object> map = getParameterMap(queryStr);
         connect();
@@ -416,6 +477,9 @@ public class Service {
         return bookmark;
     }
 
+    /**
+     *  id에 해당하는 bookmark를 삭제한다.
+     */
     public void deleteBookmark(int id) {
         connect();
         try {
@@ -429,6 +493,9 @@ public class Service {
         }
     }
 
+    /**
+     *  bookmark의 name, order를 수정하고 수정날짜를 현재 시간으로 저장한다.
+     */
     public void updateBookmark(Bookmark bookmark) {
         connect();
         String sql = "update bookmark " +

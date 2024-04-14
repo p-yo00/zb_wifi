@@ -12,11 +12,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ *  작성자 : 박예온
+ *  날짜 : 2024-04-14
+ */
 @WebServlet(urlPatterns = {"/", "/bookmark/*", "/wifiInfo/*", "/api"})
 public class HomeServlet extends HttpServlet {
     private Service service;
     private String url;
 
+    // setAttribute 후 forward
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
@@ -69,6 +74,7 @@ public class HomeServlet extends HttpServlet {
         dispatcher.forward(req, resp);
     }
 
+    // form data를 받아 작업 수행 후, redirect
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
