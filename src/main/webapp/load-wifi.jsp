@@ -1,12 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <title>Title</title>
-    <style>
-        body {
-          margin: 0 auto
-        }
-    </style>
+    <title>와이파이 로드 완료</title>
 </head>
 <body>
     <%

@@ -11,11 +11,11 @@
     List<BookmarkWifi> bookmarkList = (List<BookmarkWifi>) request.getAttribute("bookmarkWifi");
 %>
     <h1>북마크 목록</h1>
-    <a href="/">홈</a>|
-    <a href="/history">위치 히스토리 목록</a>|
-    <a href="/api">Open API 와이파이 정보 가져오기</a>
-    <a href="/bookmark/view">북마크 보기</a>
-    <a href="/bookmark/manage">북마크 그룹 관리</a>
+    <a href="/">홈</a> |
+    <a href="/history">위치 히스토리 목록</a> |
+    <a href="/api">Open API 와이파이 정보 가져오기</a> |
+    <a href="/bookmark/view">북마크 보기</a> |
+    <a href="/bookmark/manage">북마크 그룹 관리</a><br><br>
 
     <table>
         <tr>

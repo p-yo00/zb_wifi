@@ -13,7 +13,7 @@
   <a href="/history">위치 히스토리 목록</a> |
   <a href="/api">Open API 와이파이 정보 가져오기</a> |
   <a href="/bookmark/view">북마크 보기</a> |
-  <a href="/bookmark/manage">북마크 그룹 관리</a><br>
+  <a href="/bookmark/manage">북마크 그룹 관리</a><br><br>
   <%
     List<History> list = (List<History>) request.getAttribute("historyList");
   %>

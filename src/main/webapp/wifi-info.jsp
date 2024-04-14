@@ -6,7 +6,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <html>
 <head>
-    <title>Title</title>
+    <title>와이파이 정보</title>
     <link href="/css/table.css" rel="stylesheet" type="text/css">
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
 </head>
@@ -16,12 +16,13 @@
 
     WifiInfo wifi = (WifiInfo) map.get("wifiInfo");
     List<Bookmark> bookmarks = (List<Bookmark>)map.get("bookmarkGroup");
+    System.out.println(map);
 %>
     <h1>와이파이 정보 구하기</h1>
-    <a href="/">홈</a>|
-    <a href="/history">위치 히스토리 목록</a>|
-    <a href="/api">Open API 와이파이 정보 가져오기</a>
-    <a href="/bookmark/view">북마크 보기</a>
+    <a href="/">홈</a> |
+    <a href="/history">위치 히스토리 목록</a> |
+    <a href="/api">Open API 와이파이 정보 가져오기</a> |
+    <a href="/bookmark/view">북마크 보기</a> |
     <a href="/bookmark/manage">북마크 그룹 관리</a><br>
     <select id="bmGroup" name="bookmark">
         <option>북마크 그룹 이름 선택</option>
@@ -33,7 +34,7 @@
             }
         %>
     </select>
-    <button onclick="addBookmark()">북마크 추가하기</button>
+    <button onclick="addBookmark()">북마크 추가하기</button><br><br>
     <table>
         <tr>
             <th>거리(Km)</th>

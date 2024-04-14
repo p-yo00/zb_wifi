@@ -11,12 +11,15 @@ import okhttp3.Response;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.net.URLDecoder;
 import java.sql.*;
 import java.util.*;
 
 public class Service {
-    private final String sqlitePath = "E:/Users/tmshd/Documents/제로베이스/Mission1/identifier.sqlite";
+    // 프로젝트의 경로를 적어주어야 함!
+    private final String projectPath = "E:/Users/tmshd/Documents/제로베이스/Mission1";
 
     private Connection conn = null;
     private PreparedStatement pstmt = null;
@@ -25,7 +28,7 @@ public class Service {
     private void connect() {
         try {
             Class.forName("org.sqlite.JDBC");
-            conn = DriverManager.getConnection("jdbc:sqlite:" + sqlitePath);
+            conn = DriverManager.getConnection("jdbc:sqlite:" + projectPath + "/identifier.sqlite");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,7 +114,7 @@ public class Service {
         Properties prop = new Properties();
         String key;
         try {
-            prop.load(new FileInputStream("key.properties"));
+            prop.load(new FileInputStream(projectPath+"/key.properties"));
             key = (String) prop.get("key");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -122,9 +125,8 @@ public class Service {
         JsonObject jsonObj = httpApi(url.toString(), "TbPublicWifiInfo");
         int totalCount = jsonObj.get("list_total_count").getAsInt();
 
-        long before = System.currentTimeMillis();
         ArrayList<WifiInfo> wifiInfoList = new ArrayList<>();
-        for (int i=1; i<=totalCount; i+=1000) { // 천개씩 호출
+        for (int i=1; i<=totalCount; i+=1000) { // 천개씩 호출 totalCount
             url = new StringBuffer();
             url.append("http://openapi.seoul.go.kr:8088/")
                     .append(key)
@@ -143,37 +145,33 @@ public class Service {
                 }
             }
         }
-
         // 가져온 데이터를 DB에 insert
         connect();
-        System.out.println("api 가져오기 소요시간:"+(System.currentTimeMillis()-before)/1000);
-        before = System.currentTimeMillis();
         try {
-            pstmt = conn.prepareStatement
-                    ("insert or ignore into wifi_info " +
-                            "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            conn.setAutoCommit(false); // 시간 단축을 위해 insert 전체를 트랜잭션으로 실행
             int batchSize = 10000;
             int cur = 0;
 
+            pstmt = conn.prepareStatement
+                    ("insert or ignore into wifi_info " +
+                            "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             for (WifiInfo wifiInfo : wifiInfoList) {
                 cur++;
                 // 배열 컬럼 순서대로 wifiInfo의 값을 pstmt에 set
                 setPstmt(wifiInfo, new String[]{"no","district","wifiNm","addr1","addr2",
                         "floor","installType","institute","serviceType","networkType",
-                        "networkType","year","inOutDoor","connEnvir","lat","lnt","workDt"});
+                        "year","inOutDoor","connEnvir","lat","lnt","workDt"});
 
-                pstmt.addBatch();
-                if (cur == batchSize) {
+                pstmt.addBatch(); // 만개 단위로 insert
+                pstmt.clearParameters();
+                if (cur%batchSize == 0) {
                     pstmt.executeBatch();
                     pstmt.clearBatch();
-                    System.out.println("배치 소요시간:"+(System.currentTimeMillis()-before)/1000);
-                    before = System.currentTimeMillis();
-                    cur = 0;
                 }
             }
-            before=System.currentTimeMillis();
             pstmt.executeBatch();
-
+            conn.commit();
+            conn.setAutoCommit(true);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -249,7 +247,11 @@ public class Service {
 
         for (String query : queries) {
             String[] keyValue = query.split("=");
-            map.put(keyValue[0], keyValue[1]);
+            try {
+                map.put(keyValue[0], URLDecoder.decode(keyValue[1], "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return map;
@@ -259,6 +261,7 @@ public class Service {
         Map<String, Object> queryMap = getParameterMap(queryStr);
         connect();
         WifiInfo wifiInfo = null;
+        System.out.println(queryMap.get("no"));
         try {
             String sql = "select * from wifi_info where no=?";
             pstmt = conn.prepareStatement(sql);
@@ -267,6 +270,7 @@ public class Service {
             if (rs.next()) {
                 wifiInfo = (WifiInfo) resultSetToObject(new WifiInfo());
                 wifiInfo.setDistance(Double.parseDouble((String)queryMap.get("dist")));
+                System.out.println(wifiInfo.getDistance());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -325,7 +329,7 @@ public class Service {
         Map<String, Object> map = getParameterMap(queryStr);
         connect();
         try {
-            pstmt = conn.prepareStatement("insert into bookmark_wifi(bookmark_id, wifi_id) values(?,?)");
+            pstmt = conn.prepareStatement("insert into bookmark_wifi(bookmarkId, wifiId) values(?,?)");
             pstmt.setInt(1, Integer.parseInt((String) map.get("bookmarkId")));
             pstmt.setString(2, (String) map.get("wifiId"));
             pstmt.executeUpdate();

@@ -16,7 +16,7 @@
     <a href="/bookmark/view">북마크 보기</a>
     <a href="/bookmark/manage">북마크 그룹 관리</a>
     <br>
-    <p>북마크를 삭제하시겠습니까?</p>
+    <p>북마크를 삭제하시겠습니까?</p><br>
 
     <form method="post" action="/bookmark/delete">
         <input name="id" value="<%=bmWifi.getId()%>" hidden="hidden">
